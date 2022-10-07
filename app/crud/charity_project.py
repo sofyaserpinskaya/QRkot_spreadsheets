@@ -22,7 +22,7 @@ class CRUDCharityProject(CRUDBase):
         return project_id.scalars().first()
 
     @staticmethod
-    async def get_projects_by_completion_rate(
+    async def get_fully_invested_projects(
         session: AsyncSession,
     ):
         projects = await session.execute(

@@ -32,7 +32,7 @@ async def get_report(
 
 ):
     """Только для суперюзеров."""
-    projects = await charity_project_crud.get_projects_by_completion_rate(
+    projects = await charity_project_crud.get_fully_invested_projects(
         session
     )
     now_date_time = datetime.now().strftime(FORMAT)
