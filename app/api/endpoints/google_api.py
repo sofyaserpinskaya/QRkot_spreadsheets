@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import List
 
 from aiogoogle import Aiogoogle
 from fastapi import APIRouter, Depends
@@ -9,9 +9,13 @@ from app.core.db import get_async_session
 from app.core.google_client import get_service
 from app.core.user import current_superuser
 from app.crud.charity_project import charity_project_crud
+from app.schemas.charity_project import CharityProjectDB
 from app.services.google_api import (
     set_user_permissions, spreadsheets_create, spreadsheets_update_value
 )
+
+
+FORMAT = "%Y/%m/%d %H:%M:%S"
 
 
 router = APIRouter()
@@ -19,7 +23,7 @@ router = APIRouter()
 
 @router.get(
     '/',
-    response_model=List[Dict[str, Union[str, datetime]]],
+    response_model=List[CharityProjectDB],
     dependencies=[Depends(current_superuser)],
 )
 async def get_report(
@@ -31,9 +35,10 @@ async def get_report(
     projects = await charity_project_crud.get_projects_by_completion_rate(
         session
     )
-    spreadsheetid = await spreadsheets_create(wrapper_services)
-    await set_user_permissions(spreadsheetid, wrapper_services)
+    now_date_time = datetime.now().strftime(FORMAT)
+    spreadsheet_id = await spreadsheets_create(wrapper_services, now_date_time)
+    await set_user_permissions(spreadsheet_id, wrapper_services)
     await spreadsheets_update_value(
-        spreadsheetid, projects, wrapper_services
+        spreadsheet_id, projects, wrapper_services, now_date_time
     )
     return projects
