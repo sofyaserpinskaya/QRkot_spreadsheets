@@ -27,7 +27,7 @@ SPREADSHEET_BODY = dict(
         )
     ))]
 )
-TABLE_VALUES = [
+HEADER = [
     ['Отчет от', ''],
     ['Топ проектов по скорости закрытия'],
     ['Название проекта', 'Время сбора', 'Описание']
@@ -43,8 +43,12 @@ SPREADSHEET_SIZE_ERROR = (
 async def spreadsheets_create(
     wrapper_services: Aiogoogle,
     now_date_time: datetime,
-    spreadsheet_body: Dict = copy.deepcopy(SPREADSHEET_BODY),
+    spreadsheet_body: Dict = None,
 ) -> str:
+    spreadsheet_body = (
+        copy.deepcopy(SPREADSHEET_BODY) if spreadsheet_body is None
+        else spreadsheet_body
+    )
     spreadsheet_body['properties']['title'] = TITLE.format(str(now_date_time))
     service = await wrapper_services.discover('sheets', 'v4')
     response = await wrapper_services.as_service_account(
@@ -85,14 +89,14 @@ async def spreadsheets_update_value(
             project.description
         ) for project in projects
     ), key=lambda x: x[1])
-    header = copy.deepcopy(TABLE_VALUES)
+    header = copy.deepcopy(HEADER)
     header[0][1] = str(now_date_time)
     table_values = [
         *header,
         *[list(map(str, field)) for field in projects_fields],
     ]
     my_row, my_column = len(table_values), max(len(table) for table in header)
-    if my_row > ROW and my_column > COLUMN:
+    if my_row > ROW or my_column > COLUMN:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail=SPREADSHEET_SIZE_ERROR.format(
